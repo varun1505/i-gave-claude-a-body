@@ -16,7 +16,7 @@ Most people only use the first one. The second half of the talk drops the car an
 
 ## The rover, driving
 
-https://github.com/varun1505/i-gave-claude-a-body/raw/main/assets/rover-demo.mp4
+<video src="https://github.com/varun1505/i-gave-claude-a-body/raw/main/assets/rover-demo.mp4" poster="https://raw.githubusercontent.com/varun1505/i-gave-claude-a-body/main/assets/rover-demo-poster.jpg" controls muted playsinline width="100%"></video>
 
 ## Running the deck
 
