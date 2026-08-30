@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>I Gave Claude a Body</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+  :root{
+    /* Anthropic brand palette, from the press kit */
+    --ivory:#FAF9F5;
+    --slate:#141413;
+    --mid:#B0AEA5;
+    --light:#E8E6DC;
+    --clay:#D97757;
+    --blue:#6A9BCC;
+    --green:#788C5D;
+    --ink-2:#57564F;
+
+    --display:"Poppins","Helvetica Neue",Arial,sans-serif;
+    --serif:"Lora",Georgia,serif;
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+
+    --pad-x:8.5%;
+    --pad-y:6.2%;
+    --gap:1.25rem;
+  }
+
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--ivory);color:var(--slate);font-family:var(--display);-webkit-font-smoothing:antialiased;cursor:default;}
+  .slide{cursor:pointer;}
+  .slide video,.slide a,.slide button{cursor:auto;}
+
+  /* every slide uses the same three-row grid: label / content / footer */
+  .slide{
+    position:relative;width:100%;aspect-ratio:16/9;max-height:100vh;margin:0 auto;
+    padding:var(--pad-y) var(--pad-x);
+    display:none;grid-template-rows:auto 1fr auto;gap:var(--gap);
+    background:var(--ivory);overflow:hidden;container-type:inline-size;
+    font-size:clamp(14px,1.82cqw,35px);
+  }
+  .slide.on{display:grid;}
+
+  .label{
+    display:flex;align-items:center;gap:.9em;
+    font-family:var(--mono);font-size:.74em;letter-spacing:.14em;text-transform:uppercase;color:var(--clay);
+  }
+  .label::after{content:"";flex:1;height:1px;background:var(--light);}
+
+  .content{display:flex;flex-direction:column;justify-content:center;gap:var(--gap);min-height:0;min-width:0;}
+  .content.split{flex-direction:row;align-items:center;gap:5.5%;}
+  .content.split .text{flex:1;display:flex;flex-direction:column;gap:var(--gap);min-width:0;}
+  .content.split img{width:32%;flex:none;max-height:88%;object-fit:contain;}
+
+  h1{font-weight:600;font-size:3.2em;line-height:1.02;letter-spacing:-.03em;margin:0;text-wrap:balance;}
+  h2{font-weight:600;font-size:2.2em;line-height:1.06;letter-spacing:-.025em;margin:0;text-wrap:balance;}
+  h3{font-weight:600;font-size:1.35em;line-height:1.16;margin:0;}
+  .sub{font-family:var(--serif);font-size:1.16em;line-height:1.5;color:var(--ink-2);max-width:38ch;margin:0;}
+
+  .takeaway{display:flex;align-items:baseline;gap:.8em;border-top:2px solid var(--clay);padding-top:.55em;min-width:0;}
+  .takeaway .k{font-family:var(--mono);font-size:.7em;letter-spacing:.13em;text-transform:uppercase;color:var(--clay);white-space:nowrap;flex:none;}
+  .takeaway .v{font-weight:600;font-size:1.02em;line-height:1.28;min-width:0;overflow-wrap:anywhere;}
+
+  .foot{font-family:var(--mono);font-size:.72em;letter-spacing:.1em;text-transform:uppercase;color:var(--mid);display:none;}
+  body.notes .foot{display:block;}
+
+  .stmt h1{font-size:2.95em;max-width:17ch;}
+  /* statement slides that carry an illustration */
+  .stmt .content.split{flex-direction:row;align-items:center;gap:5%;}
+  .stmt .content.split img{width:34%;flex:none;max-height:82%;object-fit:contain;}
+  .stmt .content.split h1{font-size:2.35em;max-width:14ch;}
+  .stmt .sub{font-size:1.4em;max-width:26ch;}
+
+  .on-slate{background:var(--slate);color:var(--ivory);}
+  .on-slate .sub{color:#B8B6AD;}
+  .on-slate .label::after{background:#33322E;}
+  .on-slate .foot{color:#6A6963;}
+
+  .on-clay{background:var(--clay);color:var(--ivory);}
+  .on-clay .sub{color:#FBEFEA;}
+  .on-clay .label{color:#FAD9CC;}
+  .on-clay .label::after{background:#C4674A;}
+  .on-clay .foot{color:#EFC0AD;}
+
+  .muted h1{color:var(--ink-2);}
+  .anything{font-family:var(--display);font-weight:600;color:var(--clay);font-size:2.3em;line-height:1;letter-spacing:-.025em;margin:0;}
+  .credit{
+    font-family:var(--mono);font-size:.52em;letter-spacing:.06em;
+    color:var(--mid);flex:none;text-align:right;
+  }
+  .contact{display:flex;align-items:center;gap:1.1em;border-top:2px solid var(--clay);padding-top:.9em;}
+  .contact img{width:6.2em;height:6.2em;flex:none;}
+  .contact div{display:flex;flex-direction:column;gap:.18em;min-width:0;}
+  .contact .nm{font-weight:600;font-size:1.25em;line-height:1.1;}
+  .contact .rl{font-family:var(--mono);font-size:.76em;letter-spacing:.06em;color:var(--ink-2);}
+
+  /* slide 2: the old question struck out above the new one */
+  .struck{
+    font-weight:600;font-size:1.55em;line-height:1.1;letter-spacing:-.02em;margin:0 0 .1em;
+    color:#6A6963;text-decoration:line-through;text-decoration-thickness:.05em;
+  }
+  .on-slate .struck{color:#6A6963;}
+
+  .logo{height:1.5em;width:auto;flex:none;}
+  .spark{width:1.35em;height:1.35em;flex:none;}
+
+  .facts{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:1fr 1fr;gap:0 3em;}
+  .facts li{font-family:var(--serif);font-size:.98em;color:var(--ink-2);padding:.5em 0;border-bottom:1px solid var(--light);}
+
+  .five{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;}
+  .five li{display:grid;grid-template-columns:1.6em 7.5em 1fr auto;align-items:baseline;gap:1em;
+           padding:.46em 0;border-bottom:1px solid var(--light);}
+  .five .tech{font-family:var(--mono);font-size:.74em;color:var(--clay);white-space:nowrap;}
+  .five .n{font-family:var(--mono);font-size:.82em;color:var(--mid);}
+  .five .nm{font-weight:600;font-size:1.05em;}
+  .five .wt{font-family:var(--serif);color:var(--ink-2);font-size:.94em;}
+
+  .steps{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;}
+  .steps li{display:grid;grid-template-columns:6.6em 1fr;gap:.9em;align-items:baseline;
+            padding:.42em 0;border-bottom:1px solid var(--light);
+            font-family:var(--serif);font-size:.9em;line-height:1.42;color:var(--ink-2);}
+  .steps .k{align-self:start;padding-top:.25em;}
+  .steps b{font-family:var(--display);font-weight:600;color:var(--slate);}
+  .steps .k{font-family:var(--mono);font-size:.66em;letter-spacing:.09em;text-transform:uppercase;color:var(--clay);white-space:nowrap;}
+
+  /* slide 3: the demo video fills the frame, nothing else on it */
+  .slide.bleed{padding:0;grid-template-rows:1fr;gap:0;background:var(--slate);}
+  .slide.bleed > video{width:100%;height:100%;object-fit:contain;display:block;background:var(--slate);}
+  body.notes .slide.bleed .foot{position:absolute;left:var(--pad-x);bottom:1.2em;margin:0;color:#8A8981;z-index:2;}
+
+  .media{display:flex;gap:4%;align-items:center;justify-content:center;min-height:0;}
+  .media video{height:100%;width:auto;max-width:52%;object-fit:contain;background:var(--light);border-radius:2px;flex:none;}
+  .media .side{flex:0 1 auto;max-width:42%;display:flex;flex-direction:column;gap:1rem;min-width:0;}
+
+  .zones{display:flex;gap:.5em;font-family:var(--mono);font-size:.74em;letter-spacing:.1em;}
+  .zone{padding:.35em .8em;border:1px solid var(--light);color:var(--mid);border-radius:2px;}
+  .zone.b{background:var(--clay);border-color:var(--clay);color:var(--ivory);}
+  .zone.c{background:var(--green);border-color:var(--green);color:var(--ivory);}
+
+  .pair{display:grid;grid-template-columns:1fr 1fr;gap:4%;}
+  .slot{border:1px solid var(--light);background:#F2F0E8;aspect-ratio:4/3;display:flex;align-items:center;
+        justify-content:center;border-radius:2px;font-family:var(--mono);font-size:.72em;color:var(--mid);
+        letter-spacing:.1em;margin-bottom:.8em;}
+  .cap{font-family:var(--mono);font-size:.7em;letter-spacing:.13em;text-transform:uppercase;color:var(--mid);margin-bottom:.35em;}
+
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:3.5%;align-items:start;}
+  .card{display:flex;flex-direction:column;gap:.55em;min-width:0;}
+  .card .qr{width:3.9em;height:3.9em;flex:none;}
+  .card .who{font-family:var(--mono);font-size:.7em;letter-spacing:.11em;text-transform:uppercase;color:var(--clay);}
+  .card h3{font-size:1.14em;line-height:1.16;}
+  .card p{font-family:var(--serif);font-size:.87em;line-height:1.4;color:var(--ink-2);margin:0;}
+  .card a{font-family:var(--mono);font-size:.7em;color:var(--mid);text-decoration:none;word-break:break-all;}
+  .card a:hover{color:var(--clay);}
+
+  code{font-family:var(--mono);font-size:.9em;background:var(--light);padding:.1em .35em;border-radius:2px;}
+
+  .bar{position:fixed;left:0;right:0;bottom:0;height:3px;background:var(--light);z-index:20;}
+  .bar span{display:block;height:100%;background:var(--clay);width:0;}
+  .nav{position:fixed;right:1.1rem;bottom:1.1rem;z-index:21;display:flex;gap:.4rem;align-items:center;
+       font-family:var(--mono);font-size:.7rem;color:var(--mid);letter-spacing:.1em;}
+  .nav button{font:inherit;color:var(--slate);background:var(--ivory);border:1px solid var(--light);
+              width:2rem;height:1.9rem;cursor:pointer;line-height:1;border-radius:2px;}
+  .nav button:hover{border-color:var(--clay);color:var(--clay);}
+  .nav button:focus-visible{outline:2px solid var(--clay);outline-offset:2px;}
+
+  @media print{
+    .nav,.bar{display:none;}
+    .slide{display:grid !important;page-break-after:always;max-height:none;height:100vh;
+           -webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .foot{display:none !important;}
+    @page{size:landscape;margin:0;}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important;}}
+</style>
+</head>
+<body>
+
+<!-- 1 -->
+<section class="slide stmt muted on">
+  <div class="label">The question everyone asks</div>
+  <div class="content split">
+    <img src="assets/ill-01-boring.jpg" alt="">
+    <div class="text"><h1>Will AI take my job?</h1></div>
+  </div>
+  <div class="foot">Say it flat. You're clearing the table.</div>
+</section>
+
+<!-- 2 -->
+<section class="slide stmt on-slate">
+  <div class="label">The one I think is interesting</div>
+  <div class="content split">
+    <div class="text" style="gap:.4rem;">
+      <p class="struck">Will AI take my job?</p>
+      <h1>What can you do now that you couldn't do last year?</h1>
+    </div>
+    <img src="assets/ill-02-open.jpg" alt="">
+  </div>
+  <div class="foot">Pause. Two full seconds.</div>
+</section>
+
+<!-- 3 -->
+<section class="slide bleed">
+  <video src="assets/rover-demo.mp4" poster="assets/rover-demo-poster.jpg" controls playsinline preload="metadata"></video>
+  <div class="foot">Car on the floor first · if it misbehaves, hit play and carry on · live readout is in the web app if anyone asks</div>
+</section>
+
+<!-- 4 -->
+<section class="slide">
+  <div class="label"><img class="logo" src="assets/claude-code-logo.svg" alt="Claude Code"> Meetup · Pune · 29 Aug 2026</div>
+  <div class="content split">
+    <img src="assets/rover-photo.jpg" alt="The rover: a toy truck carrying a Raspberry Pi and camera" style="width:46%;border-radius:2px;object-fit:cover;">
+    <div class="text">
+      <h1>I Gave Claude<br>a Body</h1>
+      <p class="sub">Varun Srinivas — CTO &amp; Chief AI Officer, Coditas</p>
+    </div>
+  </div>
+  <div class="foot">Two sentences. You've already earned the room.</div>
+</section>
+
+<!-- 5 -->
+<section class="slide">
+  <div class="label">What it took</div>
+  <div class="content">
+    <h1>One weekend.</h1>
+    <ul class="facts">
+      <li>Making the wheels turn</li>
+      <li>Getting the camera working</li>
+      <li>Wiring it all to a small computer</li>
+      <li>Working out how far away things are</li>
+    </ul>
+    <p class="sub">Every one of those used to be a weekend of reading on its own.</p>
+  </div>
+  <div class="foot">Last line hands off into Friday night</div>
+</section>
+
+<!-- 6 -->
+<section class="slide">
+  <div class="label">Friday night</div>
+  <div class="content split">
+    <img src="assets/ill-06-place.jpg" alt="">
+    <div class="text">
+      <h2>I put Claude on the car.</h2>
+      <p class="sub">A chat app in a browser can only ever talk about your work. Claude Code runs on your own machine, inside whatever folder you start it in — it reads your real files, changes them, runs commands. So I started it on the Raspberry Pi bolted to the car. It writes a script, runs it, and the wheels actually turn.</p>
+      <div class="takeaway"><span class="k">A place</span><span class="v">Run it on your own files, not in a browser tab.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 7 -->
+<section class="slide">
+  <div class="label">Saturday morning</div>
+  <div class="content split">
+    <img src="assets/ill-07-rules.jpg" alt="">
+    <div class="text">
+    <h2>I stopped explaining the same things.</h2>
+    <p class="sub">Every session started the same way — which pin drives which motor, how the camera is mounted, what not to touch. So I wrote all of it down once, in a file it reads before it does anything.</p>
+    <div class="takeaway"><span class="k">Rules</span><span class="v">Say it once, not every time.</span></div>
+  </div>
+</section>
+
+<!-- 8 -->
+<section class="slide">
+  <div class="label">Saturday afternoon</div>
+  <div class="content split">
+    <img src="assets/ill-08-hands.jpg" alt="">
+    <div class="text">
+    <h2>It kept telling me what to do.</h2>
+    <p class="sub">I'd ask it to turn left and it would explain how to turn left. I wanted a driver, not a consultant. So I gave it two functions it can call itself — one returns a frame from the camera, one drives the motors for a set duration.</p>
+    <div class="takeaway"><span class="k">Hands</span><span class="v">Let it do things, not just talk about them.</span></div>
+    </div>
+    </div>
+  </div>
+  <div class="foot">The turn of the whole talk. Slow down here.</div>
+</section>
+
+<!-- 9 -->
+<section class="slide">
+  <div class="label">Saturday night</div>
+  <div class="content split">
+    <img src="assets/ill-09-limits.jpg" alt="">
+    <div class="text">
+    <h2>I wanted to stop standing over it.</h2>
+    <p class="sub">Watching every move rather defeats the point. So I set the boundaries once — how long a single move may run, what happens if the next command never arrives, and what cuts the motors regardless.</p>
+    <div class="takeaway"><span class="k">Limits</span><span class="v">Decide once what happens without you.</span></div>
+  </div>
+</section>
+
+<!-- 10 -->
+<section class="slide">
+  <div class="label">Sunday</div>
+  <div class="content split">
+    <img src="assets/ill-10-shortcuts.jpg" alt="">
+    <div class="text">
+    <h2>I was typing the same things again.</h2>
+    <p class="sub">Same setup, same calibration, same handful of instructions at the start of every session. Anything I'd done twice became something I could invoke by name.</p>
+    <div class="takeaway"><span class="k">Shortcuts</span><span class="v">Done it twice? Write it down.</span></div>
+  </div>
+</section>
+
+<!-- 11 -->
+<section class="slide">
+  <div class="label">Look what that adds up to</div>
+  <div class="content">
+    <h2>Five things.<br>Most people use one.</h2>
+    <ul class="five">
+      <li><span class="n">01</span><span class="nm">A place</span><span class="wt">it runs on your machine, on your real files</span><span class="tech">the folder it runs in</span></li>
+      <li><span class="n">02</span><span class="nm">Rules</span><span class="wt">everything that's true about your world</span><span class="tech">CLAUDE.md</span></li>
+      <li><span class="n">03</span><span class="nm">Hands</span><span class="wt">so it can do things, not just talk</span><span class="tech">MCP</span></li>
+      <li><span class="n">04</span><span class="nm">Limits</span><span class="wt">what it's allowed to do on its own</span><span class="tech">permissions</span></li>
+      <li><span class="n">05</span><span class="nm">Shortcuts</span><span class="wt">anything you've done twice</span><span class="tech">slash commands &amp; skills</span></li>
+    </ul>
+    </div>
+    </div>
+  </div>
+  <div class="foot">First time you use the real names — this is the teaching slide</div>
+</section>
+
+<!-- bridge -->
+<section class="slide stmt on-slate">
+  <div class="label">Your turn</div>
+  <div class="content split">
+    <div class="text">
+      <h1>What would you solve with this?</h1>
+      <p class="sub">Let's look at an example.</p>
+    </div>
+    <img src="assets/ill-12-yours.jpg" alt="">
+  </div>
+  <div class="foot">Genuinely ask. Take a couple of answers, then: "here's mine."</div>
+</section>
+
+<!-- 12 -->
+<section class="slide">
+  <div class="label">Same five · no car anywhere</div>
+  <div class="content split" style="align-items:flex-start;gap:4%;">
+    <img src="assets/ill-13-records.jpg" alt="" style="width:26%;max-height:100%;">
+    <div class="text">
+    <h2>Sorting out your medical records</h2>
+    <ul class="steps">
+      <li><span class="k">A place</span><span>Every scan and lab report in one folder — out of three hospital websites and a drawer. <b>One evening.</b></span></li>
+      <li><span class="k">Rules</span><span>Never guess a diagnosis. Always say which file it came from. Keep the lab's own numbers exactly as they are.</span></li>
+      <li><span class="k">Hands</span><span>Let it search the medical research, and read the inbox where results land.</span></li>
+      <li><span class="k">Limits</span><span>It can read and summarise on its own. It never edits an original.</span></li>
+      <li><span class="k">Shortcuts</span><span>One you can ask for by name: everything that changed since your last appointment.</span></li>
+    </ul>
+    </div>
+  </div>
+  <div class="foot">This is where the non-engineers decide the talk was for them. Slow down.</div>
+</section>
+
+<!-- 13 -->
+<section class="slide">
+  <div class="label">Other people have done really cool non-coding things</div>
+  <div class="content">
+    <div class="cards">
+      <div class="card">
+        <img class="qr" src="assets/qr-tomato.svg" alt="">
+        <span class="who">Martin DeVido</span>
+        <h3>Claude grows a tomato plant</h3>
+        <p>Wakes every half hour. Checks temperature, humidity and soil, looks at the plant through a camera, decides whether to water it or turn on the light. Months of it, no human. The plant's called Sol.</p>
+        <a href="https://autoncorp.com/biodome">autoncorp.com/biodome</a>
+      </div>
+      <div class="card">
+        <img class="qr" src="assets/qr-mri.svg" alt="">
+        <span class="who">Tobi Lütke · Shopify</span>
+        <h3>Reads his own MRI</h3>
+        <p>His annual scan came back on a USB stick that only opened in Windows software he didn't have. He pointed Claude at the stick and asked for something he could actually read.</p>
+        <a href="https://x.com/tobi/status/2010438500609663110">x.com/tobi</a>
+      </div>
+      <div class="card">
+        <img class="qr" src="assets/qr-dna.svg" alt="">
+        <span class="who">Pietro Schirano</span>
+        <h3>Reads his own DNA</h3>
+        <p>Handed over the raw file from an ancestry test and asked which health genes were worth keeping an eye on. Huge file — it went and found the parts that mattered.</p>
+        <a href="https://x.com/skirano/status/2007540021536993712">x.com/skirano</a>
+      </div>
+    </div>
+  </div>
+  <div class="foot">A plant, a body scan, a genome — then: "and some bloke in Pune with a toy car."  ·  mention the QR codes</div>
+</section>
+
+<!-- 14 -->
+<section class="slide">
+  <div class="label">So — back to where we started</div>
+  <div class="content split" style="gap:4%;">
+    <div class="text">
+      <h1>What can you do now that you couldn't do last year?</h1>
+      <p class="anything">Anything.</p>
+    </div>
+    <img src="assets/ill-15-anything.jpg" alt="" style="width:44%;max-height:100%;">
+  </div>
+</section>
+
+
+
+<!-- 16 · holding slide for Q&A -->
+<section class="slide">
+  <div class="label"><img class="spark" src="assets/claude-spark.svg" alt=""> Claude Code Meetup · Pune</div>
+  <div class="content split" style="gap:5%;">
+    <img src="assets/ill-16-thanks.jpg" alt="" style="width:38%;max-height:100%;">
+    <div class="text" style="gap:1rem;">
+      <h1>Thank you.</h1>
+      <p class="sub">Questions — and feel free to come and check out the rover.</p>
+      <div class="contact">
+        <img src="assets/linkedin-qr.png" alt="LinkedIn QR code">
+        <div>
+          <span class="nm">Varun Srinivas</span>
+          <span class="rl">CTO &amp; Chief AI Officer, Coditas</span>
+          <span class="rl">varun@coditas.com</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="credit">Illustrations made with the illo skill · characters: prompt &amp; blip</div>
+  <div class="foot">Leave this up for the whole of Q&amp;A</div>
+</section>
+
+<div class="bar"><span id="bar"></span></div>
+<div class="nav">
+  <span id="count">1 / 16</span>
+  <button id="full" aria-label="Toggle full screen" title="Full screen (F)">⛶</button>
+  <button id="prev" aria-label="Previous slide">←</button>
+  <button id="next" aria-label="Next slide">→</button>
+</div>
+
+<script>
+(function(){
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var i = 0;
+  var bar = document.getElementById('bar');
+  var count = document.getElementById('count');
+
+  function show(n){
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach(function(s, k){ s.classList.toggle('on', k === i); });
+    bar.style.width = ((i + 1) / slides.length * 100) + '%';
+    count.textContent = (i + 1) + ' / ' + slides.length;
+    try{ parent.postMessage({type:'slide', i:i, total:slides.length}, '*'); }catch(e){}
+  }
+
+  document.getElementById('next').addEventListener('click', function(){ show(i + 1); });
+  document.getElementById('prev').addEventListener('click', function(){ show(i - 1); });
+
+  // click anywhere on a slide to advance; shift-click (or right-click) to go back
+  document.addEventListener('click', function(e){
+    if (e.target.closest('.nav, video, a, button, input, textarea, select')) return;
+    if (window.getSelection && String(window.getSelection())) return;  // don't jump while selecting text
+    show(e.shiftKey ? i - 1 : i + 1);
+  });
+  document.addEventListener('contextmenu', function(e){
+    if (e.target.closest('.nav, video, a, button, input, textarea, select')) return;
+    e.preventDefault();
+    show(i - 1);
+  });
+
+  // videos always play at full volume and 1.25x, never muted
+  var RATE = 1.25;
+  var vids = Array.prototype.slice.call(document.querySelectorAll('video'));
+  function fix(v){
+    v.muted = false; v.volume = 1;
+    v.preservesPitch = v.mozPreservesPitch = v.webkitPreservesPitch = true;  // keep voices natural
+    if (v.playbackRate !== RATE) v.playbackRate = v.defaultPlaybackRate = RATE;
+  }
+  vids.forEach(function(v){
+    fix(v);
+    ['loadedmetadata','loadeddata','play','playing','volumechange','ratechange'].forEach(function(ev){
+      v.addEventListener(ev, function(){
+        if (v.muted || v.volume !== 1 || v.playbackRate !== RATE) fix(v);
+      });
+    });
+  });
+
+  var fullBtn = document.getElementById('full');
+  function toggleFull(){
+    var d = document, el = d.documentElement;
+    if (d.fullscreenElement || d.webkitFullscreenElement) {
+      (d.exitFullscreen || d.webkitExitFullscreen).call(d);
+    } else {
+      (el.requestFullscreen || el.webkitRequestFullscreen).call(el);
+    }
+  }
+  fullBtn.addEventListener('click', toggleFull);
+  document.addEventListener('fullscreenchange', function(){
+    var on = !!document.fullscreenElement;
+    fullBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    fullBtn.title = on ? 'Exit full screen (F)' : 'Full screen (F)';
+  });
+
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { show(i + 1); e.preventDefault(); }
+    if (e.key === 'ArrowLeft'  || e.key === 'PageUp')   { show(i - 1); e.preventDefault(); }
+    if (e.key === 'n' || e.key === 'N') { document.body.classList.toggle('notes'); }
+    if (e.key === 'f' || e.key === 'F') { toggleFull(); e.preventDefault(); }
+    if (e.key === 'Home') { show(0); }
+    if (e.key === 'End')  { show(slides.length - 1); }
+  });
+
+  window.addEventListener('message', function(e){
+    var d = e.data || {};
+    if (d.type === 'goto' && typeof d.i === 'number') show(d.i);
+    if (d.type === 'notes') document.body.classList.toggle('notes', !!d.on);
+  });
+
+  show(0);
+})();
+</script>
+</body>
+</html>
