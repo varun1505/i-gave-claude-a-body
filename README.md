@@ -22,4 +22,6 @@ Most people only use the first one. The second half of the talk drops the car an
 
 Open `deck.html` in a browser. Arrow keys move between slides. Everything it needs is in `assets/`.
 
+There is also a [PDF of the slides](deck.pdf) if you just want to read through it.
+
 The demo video here is compressed for GitHub; the original is 1080p at a much higher bitrate.
